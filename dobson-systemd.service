@@ -1,0 +1,11 @@
+[Unit]
+Description=Dobson Slack bot
+
+[Install]
+WantedBy=default.target
+
+[Service]
+ExecStart=/usr/bin/make dev
+Type=simple
+Restart=always
+WorkingDirectory=/home/jvperrin/dobson
