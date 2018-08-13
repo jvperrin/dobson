@@ -7,34 +7,12 @@
 # snmpwalk -v1 -c public 192.168.0.1 iso.3.6.1.2.1.3.1.1.2.12.1
 
 import csv
-import subprocess
 import sys
 import time
-import dobson.constants as constants
 
 from slackclient import SlackClient
 
-
-def get_devices():
-    """Get the list of MAC addresses of connected devices
-
-    TODO: Make this method less specific to this model of router (TP-Link Archer C50)
-    """
-    output = subprocess.check_output(('/usr/bin/snmpwalk', '-v1', '-c', 'public', '192.168.0.1', 'iso.3.6.1.2.1.3.1.1.2.12.1'))
-    devices = output.decode('utf-8').rstrip().split('\n')
-
-    for device in devices:
-        # The output from SNMP looks like this, so we parse it for the IP and MAC address:
-        # iso.3.6.1.2.1.3.1.1.2.12.1.192.168.0.100 = Hex-STRING: 74 4A A4 CC 81 A1
-
-        mac_addr = device[-18:].strip(' ').lower().replace(' ', ':')
-        ip_addr = device[27:40]
-
-        if mac_addr in constants.KNOWN_DEVICES:
-            found_device = constants.KNOWN_DEVICES[mac_addr]
-
-            if found_device.presence:
-                yield found_device
+import dobson.utils as utils
 
 
 def rtm_connect(slack_client):
@@ -63,7 +41,7 @@ def fetch_messages(slack_client):
 
         # Restrict messages to certain channels
         # TODO: Make this more widely available and add authentication
-        if message['channel'] not in constants.ALLOWED_CHANNEL_IDS:
+        if message['channel'] not in utils.ALLOWED_CHANNEL_IDS:
             return
 
         print(message)
@@ -71,7 +49,7 @@ def fetch_messages(slack_client):
         text = message['text']
         lower_text = text.lower()
         # If someone mentions dobson or ozone at the beginning of the message, respond if it's a valid command
-        if lower_text.startswith('dobson') or text.startswith('<@{}>'.format(constants.DOBSON_SLACK_ID)):
+        if lower_text.startswith('dobson') or text.startswith('<@{}>'.format(utils.DOBSON_SLACK_ID)):
             if lower_text.endswith('help') or lower_text.endswith('?'):
                 respond_help(slack_client, message['channel'])
             if lower_text.endswith('who') or lower_text.endswith('list'):
@@ -90,7 +68,7 @@ def respond_help(slack_client, channel):
 
 def respond_users(slack_client, channel):
     """Respond with a list of users who are currently at ozone"""
-    users = [device.user for device in get_devices()]
+    users = [device.user for device in utils.get_devices()]
 
     if len(users) > 2:
         reply = '{}, and {} are at ozone'.format(', '.join(users[:-1]), users[-1])
@@ -110,7 +88,7 @@ def respond_users(slack_client, channel):
 
 
 def main():
-    slack_client = SlackClient(constants.SLACK_API_TOKEN)
+    slack_client = SlackClient(utils.SLACK_API_TOKEN)
     rtm_connect(slack_client)
 
     while True:

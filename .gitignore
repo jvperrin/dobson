@@ -1,6 +1,9 @@
 # Project-specific
-dobson/constants.py
+dobson/config.ini
+dobson/devices.json
 /venv
+*.DS_Store
+.idea
 
 # Vim swap files
 *.swo
