@@ -4,6 +4,7 @@ dobson/devices.json
 /venv
 *.DS_Store
 .idea
+dobson/mac_addresses.txt
 
 # Vim swap files
 *.swo
