@@ -14,7 +14,7 @@ config.read('dobson/config.ini')
 SLACK_API_TOKEN = config['dobson']['SlackApiToken']
 
 # Only allow querying for presence in certain channels
-ALLOWED_CHANNEL_IDS = json.loads(config['dobson']['AllowedChannelIds'])
+ALLOWED_CHANNEL_IDS = config['dobson']['AllowedChannelIds'].split('\n')
 
 # The user ID of the dobson bot
 DOBSON_SLACK_ID = config['dobson']['DobsonSlackId']
@@ -23,19 +23,20 @@ DOBSON_SLACK_ID = config['dobson']['DobsonSlackId']
 MAC_LOG_FILE = config['dobson']['MacAddressLogFile']
 
 # create KNOWN_DEVICES, which maps mac addresses (str) to Device instances
-if not os.path.isfile(config['dobson']['KnownDevicesFile']):
-    with open(config['dobson']['KnownDevicesFile'], 'w') as f:
-        f.write('{}')
-    KNOWN_DEVICES = {}
-else:
+KNOWN_DEVICES = {}
+if os.path.isfile(config['dobson']['KnownDevicesFile']):
     with open(config['dobson']['KnownDevicesFile'], 'r') as f:
-        KNOWN_DEVICES = json.loads(f.read())
-    for key, val in list(KNOWN_DEVICES.items()):
-        KNOWN_DEVICES[key] = Device(**val)
+        tmp_devices = json.loads(f.read())
+    for key, val in tmp_devices.items():
+        KNOWN_DEVICES[key.lower()] = Device(**val)
+else:
+    print("Missing `{}` with device information. If you want to proceed without data, make the file with {} in it".
+          format(config['dobson']['KnownDevicesFile']))
+    exit(1)
 
 
 def get_devices():
-    """Get the list of MAC addresses of connected devices"""
+    """Get all recognized connected devices"""
     for mac_addr in get_mac_addresses():
         if mac_addr in KNOWN_DEVICES:
             found_device = KNOWN_DEVICES[mac_addr]
@@ -51,7 +52,8 @@ def get_mac_addresses():
     TODO: Make this method less specific to this model of router (TP-Link Archer C50)
     """
     output = subprocess.check_output(
-        ('/usr/bin/snmpwalk', '-v1', '-c', 'public', '192.168.0.1', 'iso.3.6.1.2.1.3.1.1.2.12.1'))
+        ('/usr/bin/snmpwalk', '-v1', '-c', 'public', '192.168.0.1', 'iso.3.6.1.2.1.3.1.1.2.12.1'),
+    )
     devices = output.decode('utf-8').rstrip().split('\n')
 
     for device in devices:

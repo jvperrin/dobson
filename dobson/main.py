@@ -6,7 +6,6 @@
 # To get a list of connected IPs and MAC addresses:
 # snmpwalk -v1 -c public 192.168.0.1 iso.3.6.1.2.1.3.1.1.2.12.1
 
-import csv
 import sys
 import time
 
