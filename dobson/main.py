@@ -51,8 +51,10 @@ def fetch_messages(slack_client):
         if lower_text.startswith('dobson') or text.startswith('<@{}>'.format(utils.DOBSON_SLACK_ID)):
             if lower_text.endswith('help') or lower_text.endswith('?'):
                 respond_help(slack_client, message['channel'])
-            if lower_text.endswith('who') or lower_text.endswith('list'):
+            elif lower_text.endswith('who') or lower_text.endswith('list'):
                 respond_users(slack_client, message['channel'])
+            elif lower_text.endswith('list unknown'):
+                respond_users(slack_client, message['channel'], list_all=True)
 
 
 def respond_help(slack_client, channel):
@@ -65,18 +67,38 @@ def respond_help(slack_client, channel):
     )
 
 
-def respond_users(slack_client, channel):
+def respond_users(slack_client, channel, list_all=False):
     """Respond with a list of users who are currently at ozone"""
     users = [device.user for device in utils.get_devices()]
+    unknown = list(utils.get_unknown_mac_addresses())
 
-    if len(users) > 2:
-        reply = '{}, and {} are at ozone'.format(', '.join(users[:-1]), users[-1])
-    elif len(users) == 2:
-        reply = '{} and {} are at ozone'.format(users[0], users[1])
+    # generic reply containing who is at ozone, e.g. "A, B and C are at ozone"
+    reply = list_to_str(users)
+    if len(users) == 0:
+        reply = 'Nobody is at ozone.'
     elif len(users) == 1:
-        reply = '{} is at ozone'.format(users[0])
+        reply += ' is at ozone.'
     else:
-        reply = 'Nobody is at ozone'
+        reply += ' are at ozone.'
+
+    if list_all and unknown:
+        # Add unknown Mac Addresses to the reply (if there are any)
+        unknown_string = list_to_str(unknown)
+        if users:
+            reply += ', along with the following untagged Mac Addresses: {}'.format(unknown_string)
+        else:
+            reply += '. But there are the following untagged Mac Addresses: '.format(unknown_string)
+    elif unknown:
+        # Add the number of unknown Mac Addresses to the reply (if there are any)
+        if users:
+            reply += ', along with {} unknown device{}.'.format(len(unknown), 's' if len(unknown) > 1 else '')
+        else:
+            reply += '. But there {} {} unknown device{}...'.\
+                format(
+                'are' if len(unknown) > 1 else 'is',
+                len(unknown),
+                's' if len(unknown) > 1 else ''
+            )
 
     slack_client.api_call(
         'chat.postMessage',
@@ -84,6 +106,30 @@ def respond_users(slack_client, channel):
         text=reply,
         as_user=True,
     )
+
+
+def list_to_str(lst):
+    """
+    Returns a comma separated string for the passed list
+    >>> list_to_str(['sean', 'jason', 'nikhil'])
+    'sean, jason and nikhil'
+    >>> list_to_str(['sean', 'jason'])
+    'sean and jason'
+    >>> list_to_str(['sean'])
+    'sean'
+    >>> list_to_str([])
+    ''
+    """
+    if len(lst) > 2:
+        res = '{}, and {}'.format(', '.join(lst[:-1]), lst[-1])
+    elif len(lst) == 2:
+        res = '{} and {}'.format(lst[0], lst[1])
+    elif len(lst) == 1:
+        res = '{}'.format(lst[0])
+    else:
+        res = ''
+
+    return res
 
 
 def main():
