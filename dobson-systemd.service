@@ -8,4 +8,4 @@ WantedBy=default.target
 ExecStart=/usr/bin/make dev
 Type=simple
 Restart=always
-WorkingDirectory=/home/jvperrin/dobson
+WorkingDirectory=/home/dobson/dobson
