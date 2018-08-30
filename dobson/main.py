@@ -53,9 +53,9 @@ def fetch_messages(slack_client):
             if lower_text.endswith('help') or lower_text.endswith('?'):
                 respond_help(slack_client, message['channel'])
             elif lower_text.endswith('who') or lower_text.endswith('list'):
-                respond_users(slack_client, message['channel'])
+                respond_users(slack_client, message['channel'], message)
             elif lower_text.endswith('list unknown'):
-                respond_users(slack_client, message['channel'], list_all=True)
+                respond_users(slack_client, message['channel'], message, list_all=True)
 
 
 def respond_help(slack_client, channel):
@@ -68,12 +68,12 @@ def respond_help(slack_client, channel):
     )
 
 
-def respond_users(slack_client, channel, list_all=False):
+def respond_users(slack_client, channel, message, list_all=False):
     """Respond with a list of users who are currently at ozone"""
     users = [device.user for device in utils.get_devices()]
     unknown = list(utils.get_unknown_mac_addresses())
 
-    final_response = UserResponse(users, unknown, list_all).random_response()
+    final_response = UserResponse(users, unknown, message, list_all).random_response()
 
     slack_client.api_call(
         'chat.postMessage',
@@ -84,10 +84,14 @@ def respond_users(slack_client, channel, list_all=False):
 
 
 class UserResponse:
+    """
+    A helper class to handle crafting response strings to dobson queries
+    """
 
-    def __init__(self, users, unknown, list_all):
+    def __init__(self, users, unknown, message, list_all):
         self.users = users
         self.unknown = unknown
+        self.message = message
         self.list_all = list_all
 
     def random_response(self):
@@ -95,6 +99,12 @@ class UserResponse:
         return random.choice([self.response1])()
 
     def response1(self):
+        """
+        Sample responses:
+
+        Nobody is at ozone, but there is 1 unknown device...
+        Sean is at ozone, along with the following unknown devices: 000 and 111
+        """
         # reply containing who is at ozone, e.g. "A, B and C are at ozone"
         if self.users:
             reply = '{list_formatted} {is_are} at ozone'.format(**UserResponse.grammar_helper(self.users))
@@ -126,10 +136,15 @@ class UserResponse:
         For example, if we pass in a list with 1 element, the key 'is_are' would be 'is', and a list with 2 or more
         elements would be 'are'. This enables us to use format strings such as "[list of people] {is_are} home"
 
-        >>> grammar_helper(['sean', 'jason'])
-        {'is_are': 'are', 's?': 's', 'num': 'two'}
         >>> "There {is_are} {num} device{s?} connected".format(**grammar_helper(['sean', 'jason', 'nikhil']))
-        "There are 2 devices connected"
+        "There are 3 devices connected"
+
+
+        The list of keywords returned:
+        * is_are: either the string 'is' or 'are'
+        * num: the number of elements as a string, e.g. '2'
+        * s?: either the string 's' or the empty string ('')
+        * list_formatted: the output of calling list_to_str on items
         """
         return {
             'is_are': 'is' if len(items) == 1 else 'are',
