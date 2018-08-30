@@ -35,19 +35,18 @@ else:
     exit(1)
 
 
-def get_devices(require_presence=True):
+def get_devices(return_all=False):
     """
     Get all recognized connected devices.
-    If require_presence is True (default) only returns devices labeled as presence (typically mobile devices that
+    If return_all is False (default) only returns devices labeled as presence (typically mobile devices that
     should indicate an individual's presence). Otherwise returns all devices
-
     """
     for mac_addr in get_mac_addresses():
         if mac_addr in KNOWN_DEVICES:
             found_device = KNOWN_DEVICES[mac_addr]
 
             # return the device if it signifies presence or if we want all devices regardless
-            if found_device.presence or not require_presence:
+            if found_device.presence or return_all:
                 yield found_device
 
 
@@ -81,8 +80,10 @@ def get_unknown_mac_addresses():
 
 
 def add_device(mac_addr, data):
-    """Adds an entry for the specified Mac Address to devices.json and KNOWN_DEVICES
-    If the specified Mac Address already exists, returns False and does not update"""
+    """
+    Adds an entry for the specified MAC Address to devices.json and KNOWN_DEVICES
+    If the specified MAC Address already exists, returns False and does not update
+    """
     mac_addr = mac_addr.lower()
     if mac_addr in KNOWN_DEVICES:
         return False
