@@ -35,13 +35,18 @@ else:
     exit(1)
 
 
-def get_devices():
-    """Get all recognized connected devices"""
+def get_devices(return_all=False):
+    """
+    Get all recognized connected devices.
+    If return_all is False (default) only returns devices labeled as presence (typically mobile devices that
+    should indicate an individual's presence). Otherwise returns all devices
+    """
     for mac_addr in get_mac_addresses():
         if mac_addr in KNOWN_DEVICES:
             found_device = KNOWN_DEVICES[mac_addr]
 
-            if found_device.presence:
+            # return the device if it signifies presence or if we want all devices regardless
+            if found_device.presence or return_all:
                 yield found_device
 
 
@@ -62,3 +67,35 @@ def get_mac_addresses():
 
         mac_addr = device[-18:].strip(' ').lower().replace(' ', ':')
         yield mac_addr
+
+
+def get_unknown_mac_addresses():
+    """
+    Yields MAC Addresses connected to the router which are _not_ in devices.json. Useful for
+    tagging new devices
+    """
+    for mac_addr in get_mac_addresses():
+        if mac_addr not in KNOWN_DEVICES:
+            yield mac_addr
+
+
+def add_device(mac_addr, data):
+    """
+    Adds an entry for the specified MAC Address to devices.json and KNOWN_DEVICES
+    If the specified MAC Address already exists, returns False and does not update
+    """
+    mac_addr = mac_addr.lower()
+    if mac_addr in KNOWN_DEVICES:
+        return False
+
+    # update devices.json
+    with open(config['dobson']['KnownDevicesFile'], 'r') as f:
+        devices = json.loads(f.read())
+    devices[mac_addr] = data
+    with open(config['dobson']['KnownDevicesFile'], 'w') as f:
+        f.write(json.dumps(devices, indent=2))
+
+    # update in memory KNOWN_DEVICES variable
+    KNOWN_DEVICES[mac_addr] = Device(**data)
+
+    return True
