@@ -134,7 +134,7 @@ class UserResponse:
         Takes in a list of items and returns a dictionary mapping keywords to strings for use in format strings.
 
         For example, if we pass in a list with 1 element, the key 'is_are' would be 'is', and a list with 2 or more
-        elements would be 'are'. This enables us to use format strings such as "[list of people] {is_are} home"
+        elements would be 'are'. This enables us to use format strings such as "{list_formatted} {is_are} home"
 
         >>> "There {is_are} {num} device{s?} connected".format(**grammar_helper(['sean', 'jason', 'nikhil']))
         "There are 3 devices connected"
