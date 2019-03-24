@@ -30,7 +30,7 @@ if os.path.isfile(config['dobson']['KnownDevicesFile']):
     for key, val in tmp_devices.items():
         KNOWN_DEVICES[key.lower()] = Device(**val)
 else:
-    print("Missing `{}` with device information. If you want to proceed without data, make the file with {} in it".
+    print('Missing `{}` with device information. If you want to proceed without data, make the file with {} in it'.
           format(config['dobson']['KnownDevicesFile']))
     exit(1)
 

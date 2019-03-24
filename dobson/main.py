@@ -5,7 +5,6 @@
 #
 # To get a list of connected IPs and MAC addresses:
 # snmpwalk -v1 -c public 192.168.0.1 iso.3.6.1.2.1.3.1.1.2.12.1
-
 import random
 import sys
 import time
@@ -121,7 +120,7 @@ class UserResponse:
                 unknown_reply = unknown_prefix + '{num} unknown device{s?}{ellipsis}'
                 unknown_reply = unknown_reply.format(**UserResponse.grammar_helper(
                     self.unknown,
-                    ellipsis='...' if not self.users else ''
+                    ellipsis='...' if not self.users else '',
                 ))
         else:
             unknown_reply = '.'
@@ -151,7 +150,7 @@ class UserResponse:
             'num': '{:,}'.format(len(items)),
             's?': '' if len(items) == 1 else 's',
             'list_formatted': UserResponse.list_to_str(items),
-            **kwargs
+            **kwargs,
         }
 
     @staticmethod
