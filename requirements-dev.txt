@@ -14,7 +14,7 @@ pre-commit==1.17.0
 py==1.8.0
 pyparsing==2.4.0
 pytest==5.0.1
-PyYAML==5.1.1
+PyYAML==5.4
 requirements-tools==1.2.1
 toml==0.10.0
 virtualenv==16.6.1
